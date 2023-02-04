@@ -67,11 +67,9 @@
         </StackPanel>
         <TextBox
             Name="MessagesBox"
-            Text="预计未来加入基本初等函数计算\双精度等"
+            Text="信息框"
             IsReadOnly="True"
-            FontSize="18"
-            Width="400"
-            MaxLines="2"/>
+            FontSize="18"/>
         <Rectangle Height="5"/>
     </StackPanel>
 </Window>
