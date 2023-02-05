@@ -4,44 +4,37 @@ using System.Text;
 
 namespace IEEE754Calculator
 {
-    public enum ParseResult
-    {
-        成功,
-        字符串过长,
-        有非法字符
-    }
     internal static class MathTool
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (int sign, int expo, int mantissa) SplitBinary32Bits(int floatBits) => 
-            (sign: floatBits >> 31, 
-            expo: (floatBits & int.MaxValue) >> 23, 
-            mantissa: floatBits & 0b111_11111_11111_11111_11111);
+        const int FP32ExpoMask = 0b0__11111111__000_00000_00000_00000_00000;
+        const int FP32MantMask = 0b0__00000000__111_11111_11111_11111_11111;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int SetupBinary32Bits(int signBit, int exponentBit, int mantissaBit)
+        public static (int sign, int expo, int mantissa) SplitBinary32(float value)
         {
-            exponentBit &= byte.MaxValue;
-            mantissaBit &= 0b111_11111_11111_11111_11111;
-            int allBits = (signBit << 31) | (exponentBit << 23) | (mantissaBit);
-            return allBits;
+            int bits = AsInt(value);
+            return (sign: bits >> 31 & 1,
+                    expo: bits >> 23 & byte.MaxValue,
+                    mantissa: bits & FP32MantMask);
         }
 
-        const int FP32ExpoMask = 0b11111111_00000000000000000000000;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float SetupBinary32(int signBit, int exponentBit, int mantissaBit) =>
+            AsFloat(signBit << 31 | (exponentBit << 23 & FP32ExpoMask) | mantissaBit & FP32MantMask);
 
-        public static FP32Binary FP32BitIncrement<FP32Binary>(FP32Binary x) where FP32Binary : unmanaged
+        public static FP32Binary FP32BitIncrement<FP32Binary>(FP32Binary binary) where FP32Binary : unmanaged
         {
 #if DEBUG
             unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
 #endif
-            int bits = AsInt(x);
+            int bits = AsInt(binary);
 
             if ((bits & FP32ExpoMask) >= FP32ExpoMask)
             {
                 // NaN returns NaN
                 // -Infinity returns float.MinValue
                 // +Infinity returns +Infinity
-                return (bits == unchecked((int)0xFF800000)) ? As<float, FP32Binary>(float.MinValue) : x;
+                return (bits == unchecked((int)0xFF800000)) ? As<float, FP32Binary>(float.MinValue) : binary;
             }
 
             if (bits == unchecked((int)0x80000000))
@@ -55,18 +48,18 @@ namespace IEEE754Calculator
             bits += (bits < 0) ? -1 : +1;
             return As<int, FP32Binary>(bits);
         }
-        public static FP32Binary FP32BitDecrement<FP32Binary>(FP32Binary x) where FP32Binary : unmanaged
+        public static FP32Binary FP32BitDecrement<FP32Binary>(FP32Binary binary) where FP32Binary : unmanaged
         {
 #if DEBUG
             unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
 #endif
-            int bits = AsInt(x);
+            int bits = AsInt(binary);
             if ((bits & FP32ExpoMask) >= FP32ExpoMask)
             {
                 // NaN returns NaN
                 // -Infinity returns -Infinity
                 // +Infinity returns float.MaxValue
-                return (bits == FP32ExpoMask) ? As<float, FP32Binary>(float.MaxValue) : x;
+                return (bits == FP32ExpoMask) ? As<float, FP32Binary>(float.MaxValue) : binary;
             }
 
             if (bits == 0)
@@ -89,22 +82,25 @@ namespace IEEE754Calculator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe float AsFloat<Tfrom>(Tfrom from) where Tfrom : unmanaged => *(float*)&from;
 
-        public static ParseResult TryParseBin(string binStr, int lengthLimit, out int result)
+        public static bool TryParseBin(string binStr, int lengthLimit, out int result)
         {
             result = 0;
             if (binStr.Length > lengthLimit)
-                return ParseResult.字符串过长;
-            int bin = 0;
+                return false;
             for (int i = 0; i < binStr.Length; i++)
             {
-                bin <<= 1;
+                result <<= 1;
                 if (TryParseBinChar(binStr[i], out int val))
-                    bin |= val;
+                {
+                    result |= val;
+                }
                 else
-                    return ParseResult.有非法字符;
+                {
+                    result = binStr[i];
+                    return false;
+                }
             }
-            result = bin;
-            return ParseResult.成功;
+            return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseBinChar(char c, out int result)

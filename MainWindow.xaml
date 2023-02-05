@@ -62,6 +62,6 @@
             <Rectangle Width="5"></Rectangle>
             <TextBox Name="RealValueBox" Text="0.0" KeyUp="RealValueBoxKeyUp" MaxLines="1" FontSize="18" MinWidth="200"/>
         </StackPanel>
-        <TextBox Name="MsgBox" Text="预计未来加入基本初等函数计算\双精度等" IsReadOnly="True" />
+        <TextBox Name="MsgBox" IsReadOnly="True" />
     </StackPanel>
 </Window>
