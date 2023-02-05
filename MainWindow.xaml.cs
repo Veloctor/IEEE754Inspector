@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,20 +20,21 @@ namespace IEEE754Calculator
         void RefreshDisplay(int bits)
         {
             (int sign, int expo, int mantissa)  = MathTool.SplitBinary32Bits(bits);
-            RealValueBox.Text = MathTool.AsFloat(bits).ToString("G9");
-            SignBitBox.Text = MathTool.ToBinString(sign, 1);
-            ExponentBitBox.Text = MathTool.ToBinString(expo, 8);
-            MantissaBitBox.Text = MathTool.ToBinString(mantissa, 23);
+            RealValueBox.Text = MathTool.As<int, float>(bits).ToString();
+            SignBitBox.Text = MathTool.IntToBinString(sign, 1);
+            ExponentBitBox.Text = MathTool.IntToBinString(expo, 8);
+            MantissaBitBox.Text = MathTool.IntToBinString(mantissa, 23);
             //refresh details
+            bool isDenormal = expo == 0 && mantissa != 0;
             int mantValBits = MathTool.SetupBinary32Bits(0, 127, mantissa);
-            float mantVal = MathTool.AsFloat(mantValBits);
+            float mantVal = MathTool.As<int, float>(mantValBits);
             if (expo == 0) mantVal--;
             MantissaValBox.Text = mantVal.ToString();
             ExponentValBox.Text = (expo - 127).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
-            bool isDenormal = expo == 0 && mantissa != 0;
             IsNormalLabel.Content = isDenormal ? "是" : "否";
-            ShowMsg($"0x{bits:X}\n0b{MathTool.ToBinString(bits, 32)}");
+
+            ShowMsg($"0x{bits:X}\n0b{MathTool.IntToBinString(bits, 32)}");
         }
 
         void ShowMsg(string msg) => MessagesBox.Text = msg;
@@ -44,24 +44,24 @@ namespace IEEE754Calculator
             if (e.Key == Key.Enter)
             {
                 string txt = SignBitBox.Text.TrimStart('0');
-                ParseResult result = MathTool.TryParseBin(txt, out int signBit, 1);
+                var result = MathTool.TryParseBin(txt, out int signBit, 1);
                 if (result != ParseResult.成功)
                 {
-                    ShowMsg($"{result}.符号位应该是二进制:\n{txt}");
+                    ShowMsg($"{txt}不能转换为符号位:{result}");
                     return;
                 }
                 txt = ExponentBitBox.Text.TrimStart('0');
                 result = MathTool.TryParseBin(txt, out int exponentBits, 8);
                 if (result != ParseResult.成功)
                 {
-                    ShowMsg($"{result}.指数由8位二进制组成:\n{txt}");
+                    ShowMsg($"{txt}不能转换为指数位:{result}");
                     return;
                 }
                 txt = MantissaBitBox.Text.TrimStart('0');
                 result = MathTool.TryParseBin(txt, out int mantissaBits, 23);
                 if (result != ParseResult.成功)
                 {
-                    ShowMsg($"{result}.尾数由23位二进制组成:\n{txt}");
+                    ShowMsg($"{txt}不能转换为尾数位:{result}");
                     return;
                 }
                 int bits = MathTool.SetupBinary32Bits(signBit, exponentBits, mantissaBits);
@@ -75,9 +75,9 @@ namespace IEEE754Calculator
             {
                 string txt = RealValueBox.Text.TrimStart('0');
                 if (float.TryParse(txt, out float result))
-                    RefreshDisplay(MathTool.AsInt(result));
+                    RefreshDisplay(MathTool.As<float, int>(result));
                 else
-                    ShowMsg($"\"{txt}\"\n不能转换为单精度浮点.");
+                    ShowMsg($"{txt}不能转换为单精度浮点");
             }
         }
     }
