@@ -22,9 +22,9 @@
                     Width="30"
                     TextAlignment="Center"
                     MaxLines="1"/>
-                <TextBox Name="SignValBox" IsReadOnly="True" FontSize="18" TextAlignment="Center">+</TextBox>
+                <TextBox Name="SignValBox" IsReadOnly="True" TextAlignment="Center" BorderThickness="0"/>
             </StackPanel>
-            <StackPanel Width="100">
+            <StackPanel>
                 <Label>指数位</Label>
                 <TextBox
                     Name="ExponentBitBox"
@@ -35,9 +35,9 @@
                     TextAlignment="Right"
                     Margin="5,0"
                     MaxLines="1"/>
-                <TextBox Name="ExponentValBox" IsReadOnly="True" FontSize="18" TextAlignment="Center">-128</TextBox>
+                <TextBox Name="ExponentValBox" IsReadOnly="True" TextAlignment="Center" BorderThickness="0"/>
             </StackPanel>
-            <StackPanel Width="260">
+            <StackPanel>
                 <Label>尾数位</Label>
                 <TextBox
                     Name="MantissaBitBox"
@@ -48,7 +48,7 @@
                     Margin="5,0"
                     TextAlignment="Right"
                     MaxLines="1"/>
-                <TextBox Name="MantissaValBox" IsReadOnly="True" FontSize="18" TextAlignment="Center">1.0</TextBox>
+                <TextBox x:Name="MantissaValBox" IsReadOnly="True" TextAlignment="Center" BorderThickness="0"/>
             </StackPanel>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
@@ -56,24 +56,12 @@
             <Label Name="IsNormalLabel">是</Label>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="5">
-            <Label>真实值:</Label>
-            <TextBox
-                Name="RealValueBox"
-                Text="0.0" FontSize="18"
-                KeyUp="RealValueBoxKeyUp"
-                TextAlignment="Right"
-                Width="300"
-                MaxLines="1"/>
-            <Rectangle Width="5"></Rectangle>
             <Button Name="DecrementButton" Width="20" Content="&lt;" Click="DecrementButton_Click" />
             <Rectangle Width="5"></Rectangle>
             <Button Name="IncrementButton" Width="20" Content=">" Click="IncrementButton_Click" />
+            <Rectangle Width="5"></Rectangle>
+            <TextBox Name="RealValueBox" Text="0.0" KeyUp="RealValueBoxKeyUp" MaxLines="1" FontSize="18" MinWidth="200"/>
         </StackPanel>
-        <TextBox
-            Name="MsgBox"
-            Text="信息框"
-            IsReadOnly="True"
-            FontSize="18"/>
-        <Rectangle Height="5"/>
+        <TextBox Name="MsgBox" Text="预计未来加入基本初等函数计算\双精度等" IsReadOnly="True" />
     </StackPanel>
 </Window>

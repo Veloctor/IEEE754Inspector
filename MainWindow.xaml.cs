@@ -11,15 +11,12 @@ namespace IEEE754Calculator
         public MainWindow()
         {
             InitializeComponent();
-            RefreshDisplay(0);
-            ShowMsg("预计未来加入基本初等函数计算\\双精度等");
-            Title = $"IEE754计算器v0.2 by 矢速";
         }
 
         void RefreshDisplay(int bits)
         {
             (int sign, int expo, int mantissa) = MathTool.SplitBinary32Bits(bits);
-            RealValueBox.Text = MathTool.AsFloat(bits).ToString("G9");
+            RealValueBox.Text = MathTool.AsFloat(bits).ToString("G10");
             SignBitBox.Text = MathTool.ToBinString(sign, 1);
             ExponentBitBox.Text = MathTool.ToBinString(expo, 8);
             MantissaBitBox.Text = MathTool.ToBinString(mantissa, 23);
@@ -97,21 +94,21 @@ namespace IEEE754Calculator
             ParseResult result = MathTool.TryParseBin(txt, 1, out sign);
             if (result != ParseResult.成功)
             {
-                ShowMsg($"{result}.符号位应该是二进制:\n{txt}");
+                ShowMsg($"{txt}:{result}.\n符号位应该是1bit二进制.");
                 return false;
             }
             txt = ExponentBitBox.Text.TrimStart('0');
             result = MathTool.TryParseBin(txt, 8, out expo);
             if (result != ParseResult.成功)
             {
-                ShowMsg($"{result}.指数由8位二进制组成:\n{txt}");
+                ShowMsg($"{txt}:{result}.\n指数由8位二进制组成.");
                 return false;
             }
             txt = MantissaBitBox.Text.TrimStart('0');
             result = MathTool.TryParseBin(txt, 23, out mantissa);
             if (result != ParseResult.成功)
             {
-                ShowMsg($"{result}.尾数由23位二进制组成:\n{txt}");
+                ShowMsg($"{txt}:{result}.\n尾数由23位二进制组成.");
                 return false;
             }
             return true;
