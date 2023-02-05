@@ -1,7 +1,4 @@
-﻿using System;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Input;
 
 namespace IEEE754Calculator
@@ -16,11 +13,12 @@ namespace IEEE754Calculator
             InitializeComponent();
             RefreshDisplay(0);
             ShowMsg("预计未来加入基本初等函数计算\\双精度等");
+            Title = $"IEE754计算器v0.2 by 矢速";
         }
 
         void RefreshDisplay(int bits)
         {
-            (int sign, int expo, int mantissa)  = MathTool.SplitBinary32Bits(bits);
+            (int sign, int expo, int mantissa) = MathTool.SplitBinary32Bits(bits);
             RealValueBox.Text = MathTool.AsFloat(bits).ToString("G9");
             SignBitBox.Text = MathTool.ToBinString(sign, 1);
             ExponentBitBox.Text = MathTool.ToBinString(expo, 8);
@@ -37,34 +35,16 @@ namespace IEEE754Calculator
             ShowMsg($"0x{bits:X}\n0b{MathTool.ToBinString(bits, 32)}");
         }
 
-        void ShowMsg(string msg) => MessagesBox.Text = msg;
+        void ShowMsg(string msg)
+        {
+            MsgBox.Text = msg;
+        }
 
         void BitBoxesKeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key == Key.Enter && TryParseBits(out int sign, out int expo, out int mantissa))
             {
-                string txt = SignBitBox.Text.TrimStart('0');
-                ParseResult result = MathTool.TryParseBin(txt, out int signBit, 1);
-                if (result != ParseResult.成功)
-                {
-                    ShowMsg($"{result}.符号位应该是二进制:\n{txt}");
-                    return;
-                }
-                txt = ExponentBitBox.Text.TrimStart('0');
-                result = MathTool.TryParseBin(txt, out int exponentBits, 8);
-                if (result != ParseResult.成功)
-                {
-                    ShowMsg($"{result}.指数由8位二进制组成:\n{txt}");
-                    return;
-                }
-                txt = MantissaBitBox.Text.TrimStart('0');
-                result = MathTool.TryParseBin(txt, out int mantissaBits, 23);
-                if (result != ParseResult.成功)
-                {
-                    ShowMsg($"{result}.尾数由23位二进制组成:\n{txt}");
-                    return;
-                }
-                int bits = MathTool.SetupBinary32Bits(signBit, exponentBits, mantissaBits);
+                int bits = MathTool.SetupBinary32Bits(sign, expo, mantissa);
                 RefreshDisplay(bits);
             }
         }
@@ -73,12 +53,68 @@ namespace IEEE754Calculator
         {
             if (e.Key == Key.Enter)
             {
-                string txt = RealValueBox.Text.TrimStart('0');
-                if (float.TryParse(txt, out float result))
+                if (float.TryParse(RealValueBox.Text, out float result))
                     RefreshDisplay(MathTool.AsInt(result));
                 else
-                    ShowMsg($"\"{txt}\"\n不能转换为单精度浮点.");
+                    ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
             }
+        }
+
+        private void IncrementButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseBits(out int sign, out int expo, out int mantissa))
+            {
+                ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
+                return;
+            }
+            int bits = MathTool.SetupBinary32Bits(sign, expo, mantissa);
+            float before = MathTool.AsFloat(bits);
+            bits = MathTool.FP32BitIncrement(bits);
+            float after = MathTool.AsFloat(bits);
+            RefreshDisplay(bits);
+            ShowMsg("变化量:" + (after - before));
+        }
+
+        private void DecrementButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseBits(out int sign, out int expo, out int mantissa))
+            {
+                ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
+                return;
+            }
+            int bits = MathTool.SetupBinary32Bits(sign, expo, mantissa);
+            float before = MathTool.AsFloat(bits);
+            bits = MathTool.FP32BitDecrement(bits);
+            float after = MathTool.AsFloat(bits);
+            RefreshDisplay(bits);
+            ShowMsg("变化量:" + (after - before));
+        }
+
+        bool TryParseBits(out int sign, out int expo, out int mantissa)
+        {
+            expo = mantissa = 0;
+            string txt = SignBitBox.Text.TrimStart('0');
+            ParseResult result = MathTool.TryParseBin(txt, 1, out sign);
+            if (result != ParseResult.成功)
+            {
+                ShowMsg($"{result}.符号位应该是二进制:\n{txt}");
+                return false;
+            }
+            txt = ExponentBitBox.Text.TrimStart('0');
+            result = MathTool.TryParseBin(txt, 8, out expo);
+            if (result != ParseResult.成功)
+            {
+                ShowMsg($"{result}.指数由8位二进制组成:\n{txt}");
+                return false;
+            }
+            txt = MantissaBitBox.Text.TrimStart('0');
+            result = MathTool.TryParseBin(txt, 23, out mantissa);
+            if (result != ParseResult.成功)
+            {
+                ShowMsg($"{result}.尾数由23位二进制组成:\n{txt}");
+                return false;
+            }
+            return true;
         }
     }
 }

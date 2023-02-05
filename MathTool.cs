@@ -12,11 +12,13 @@ namespace IEEE754Calculator
     }
     internal static class MathTool
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (int sign, int expo, int mantissa) SplitBinary32Bits(int floatBits) => 
             (sign: floatBits >> 31, 
             expo: (floatBits & int.MaxValue) >> 23, 
             mantissa: floatBits & 0b111_11111_11111_11111_11111);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int SetupBinary32Bits(int signBit, int exponentBit, int mantissaBit)
         {
             exponentBit &= byte.MaxValue;
@@ -25,11 +27,69 @@ namespace IEEE754Calculator
             return allBits;
         }
 
+        const int FP32ExpoMask = 0b11111111_00000000000000000000000;
+
+        public static FP32Binary FP32BitIncrement<FP32Binary>(FP32Binary x) where FP32Binary : unmanaged
+        {
+#if DEBUG
+            unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
+#endif
+            int bits = AsInt(x);
+
+            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
+            {
+                // NaN returns NaN
+                // -Infinity returns float.MinValue
+                // +Infinity returns +Infinity
+                return (bits == unchecked((int)0xFF800000)) ? As<float, FP32Binary>(float.MinValue) : x;
+            }
+
+            if (bits == unchecked((int)0x80000000))
+            {
+                // -0.0 returns float.Epsilon
+                return As<float, FP32Binary>(float.Epsilon);
+            }
+
+            // Negative values need to be decremented
+            // Positive values need to be incremented
+            bits += (bits < 0) ? -1 : +1;
+            return As<int, FP32Binary>(bits);
+        }
+        public static FP32Binary FP32BitDecrement<FP32Binary>(FP32Binary x) where FP32Binary : unmanaged
+        {
+#if DEBUG
+            unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
+#endif
+            int bits = AsInt(x);
+            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
+            {
+                // NaN returns NaN
+                // -Infinity returns -Infinity
+                // +Infinity returns float.MaxValue
+                return (bits == FP32ExpoMask) ? As<float, FP32Binary>(float.MaxValue) : x;
+            }
+
+            if (bits == 0)
+            {
+                // +0.0 returns -float.Epsilon
+                return As<float, FP32Binary>(-float.Epsilon);
+            }
+            // Negative values need to be incremented
+            // Positive values need to be decremented
+            bits += (bits < 0) ? +1 : -1;
+            return As<int, FP32Binary>(bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Tto As<Tfrom, Tto>(Tfrom from) where Tfrom : unmanaged where Tto : unmanaged => *(Tto*)&from;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe int AsInt<Tfrom>(Tfrom from) where Tfrom : unmanaged => *(int*)&from;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe float AsFloat<Tfrom>(Tfrom from) where Tfrom : unmanaged => *(float*)&from;
 
-        public static ParseResult TryParseBin(string binStr, out int result, int lengthLimit)
+        public static ParseResult TryParseBin(string binStr, int lengthLimit, out int result)
         {
             result = 0;
             if (binStr.Length > lengthLimit)
@@ -46,6 +106,7 @@ namespace IEEE754Calculator
             result = bin;
             return ParseResult.成功;
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseBinChar(char c, out int result)
         {
             result = c - '0';
@@ -80,6 +141,7 @@ namespace IEEE754Calculator
             return sb.ToString();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static unsafe int BitAt(byte* p, int bitIdx)
         {
             int byteIdx = Math.DivRem(bitIdx, 8, out int rem);
