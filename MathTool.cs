@@ -14,7 +14,7 @@ namespace IEEE754Calculator
         {
             int bits = AsInt(value);
             return (sign: bits >> 31 & 1,
-                    expo: bits >> 23 & byte.MaxValue,
+                    expo: bits >> 23 & 255,
                     mantissa: bits & FP32MantMask);
         }
 
@@ -115,20 +115,19 @@ namespace IEEE754Calculator
         /// <param name="x">要转换的值</param>
         /// <param name="length">从最低位起, 要的bit数量. 如果不填, 则会根据有效位自动确定. 若小于有效位数, 则会截断.</param>
         /// <returns>转换后的字符串.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">如果length大于T类型的bit数量, 为防止内存越界读取, 会</exception>
+        /// <exception cref="ArgumentOutOfRangeException">如果length大于T类型的bit数量, 为防止内存越界读取, 会丢这个东西</exception>
         public static unsafe string ToBinString<T>(T x, int length = 0) where T : unmanaged
         {
+            if (length > sizeof(T) * 8)
+                throw new ArgumentOutOfRangeException($"length不能大于{typeof(T)}的位长度!");
+
             var sb = new StringBuilder();
             byte* px = (byte*)&x;
 
             if (length <= 0)
             {
                 length = sizeof(T) * 8;
-                while (BitAt(px, length - 1) == 0 && --length >= 0) ;
-            }
-            else if (length > sizeof(T) * 8)
-            {
-                throw new ArgumentOutOfRangeException($"length长度不能大于{typeof(T)}的长度!");
+                while (BitAt(px, length - 1) == 0 && --length > 0) ;
             }
 
             while (--length >= 0)
