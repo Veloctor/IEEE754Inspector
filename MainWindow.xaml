@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IEEE754Calculator"
         mc:Ignorable="d"
-        Title="IEE754计算器v0.1 by 矢速"
+        Title="IEE754计算器v0.2 by 矢速"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize">
@@ -62,11 +62,15 @@
                 Text="0.0" FontSize="18"
                 KeyUp="RealValueBoxKeyUp"
                 TextAlignment="Right"
-                Width="350"
+                Width="300"
                 MaxLines="1"/>
+            <Rectangle Width="5"></Rectangle>
+            <Button Name="DecrementButton" Width="20" Content="&lt;" Click="DecrementButton_Click" />
+            <Rectangle Width="5"></Rectangle>
+            <Button Name="IncrementButton" Width="20" Content=">" Click="IncrementButton_Click" />
         </StackPanel>
         <TextBox
-            Name="MessagesBox"
+            Name="MsgBox"
             Text="信息框"
             IsReadOnly="True"
             FontSize="18"/>
