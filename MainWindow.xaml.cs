@@ -61,12 +61,16 @@ namespace IEEE754Calculator
             ExponentBitBox.Text = ToBinString(expo, 11);
             MantissaBitBox.Text = ToBinString(mantissa, 52);
             //refresh details
+            bool isDenormal = expo == 0 && mantissa != 0;
             double mantVal = SetupFPBinary<long, double>(0, 1023, mantissa);
-            if (expo == 0) mantVal--;
+            if (expo == 0)
+            {
+                expo++;
+                mantVal--;
+            }
             MantissaValBox.Text = mantVal.ToString("G18");
             ExponentValBox.Text = (expo - 1023).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
-            bool isDenormal = expo == 0 && mantissa != 0;
             IsNormalLabel.Content = isDenormal ? "是" : "否";
             long bits = AsInt64(val);
             ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 64)}");
@@ -80,12 +84,16 @@ namespace IEEE754Calculator
             ExponentBitBox.Text = ToBinString(expo, 8);
             MantissaBitBox.Text = ToBinString(mantissa, 23);
             //refresh details
+            bool isDenormal = expo == 0 && mantissa != 0;
             float mantVal = SetupFPBinary<int, float>(0, 127, mantissa);
-            if (expo == 0) mantVal--;
+            if (expo == 0)
+            {
+                expo++;
+                mantVal--;
+            }
             MantissaValBox.Text = mantVal.ToString("G7");
             ExponentValBox.Text = (expo - 127).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
-            bool isDenormal = expo == 0 && mantissa != 0;
             IsNormalLabel.Content = isDenormal ? "是" : "否";
             int bits = AsInt32(val);
             ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 32)}");
