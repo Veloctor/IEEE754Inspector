@@ -5,11 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IEEE754Calculator"
         mc:Ignorable="d"
-        Title="IEE754计算器v0.2 by 矢速"
+        Title="IEE754计算器v0.3 by 矢速"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize">
     <StackPanel>
+        <TabControl Name="FloatModeTabControl" SelectionChanged="FloatModeTabControl_SelectionChanged" BorderThickness="0"/>
         <StackPanel Orientation="Horizontal">
             <StackPanel Width="60">
                 <Label HorizontalAlignment="Center">符号位</Label>
@@ -51,6 +52,7 @@
                 <TextBox x:Name="MantissaValBox" IsReadOnly="True" TextAlignment="Center" BorderThickness="0"/>
             </StackPanel>
         </StackPanel>
+
         <StackPanel Orientation="Horizontal">
             <Label>非规约浮点:</Label>
             <Label Name="IsNormalLabel">是</Label>
@@ -60,7 +62,7 @@
             <Rectangle Width="5"></Rectangle>
             <Button Name="IncrementButton" Width="20" Content=">" Click="IncrementButton_Click" />
             <Rectangle Width="5"></Rectangle>
-            <TextBox Name="RealValueBox" Text="0.0" KeyUp="RealValueBoxKeyUp" MaxLines="1" FontSize="18" MinWidth="200"/>
+            <TextBox Name="RealValueBox" Text="0.0" KeyUp="RealValueBoxKeyUp" MaxLines="1" FontSize="18" MinWidth="300"/>
         </StackPanel>
         <TextBox Name="MsgBox" IsReadOnly="True" />
     </StackPanel>

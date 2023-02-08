@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -6,101 +7,62 @@ namespace IEEE754Calculator
 {
     internal static class MathTool
     {
-        const int FP32ExpoMask = 0b0__11111111__000_00000_00000_00000_00000;
-        const int FP32MantMask = 0b0__00000000__111_11111_11111_11111_11111;
+        public const int FP32ExpoBits = 8;
+        public const int FP32MantBits = 23;
+        public const int FP32ExpoMask = 0b0__11111111__000_00000_00000_00000_00000;
+        public const int FP32MantMask = 0b0__00000000__111_11111_11111_11111_11111;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (int sign, int expo, int mantissa) SplitBinary32(float value)
+        public const int FP64ExpoBits = 11;
+        public const int FP64MantBits = 52;
+        public const long FP64ExpoMask = 0b0__11111111111__00_00000_00000_00000_00000_00000_00000_00000_00000_00000_00000;
+        public const long FP64MantMask = 0b0__00000000000__11_11111_11111_11111_11111_11111_11111_11111_11111_11111_11111;
+
+        public static (Tbin sign, Tbin expo, Tbin mantissa) SplitFPBinary<Tfp, Tbin>(Tfp val) where Tfp : unmanaged where Tbin : unmanaged
         {
-            int bits = AsInt(value);
-            return (sign: bits >> 31 & 1,
-                    expo: bits >> 23 & 255,
-                    mantissa: bits & FP32MantMask);
+            unsafe { Debug.Assert(sizeof(Tfp) == sizeof(Tbin)); }
+            if (typeof(Tfp) == typeof(float))
+                return (sign: As<int, Tbin>(AsInt32(val) >> 31 & 1),
+                        expo: As<int, Tbin>(AsInt32(val) >> FP32MantBits & FP32ExpoMask >> FP32MantBits),
+                    mantissa: As<int, Tbin>(AsInt32(val) & FP32MantMask));
+            if (typeof(Tfp) == typeof(double))
+                return (sign: As<long, Tbin>(AsInt64(val) >> 63 & 1),
+                        expo: As<long, Tbin>(AsInt64(val) >> FP64MantBits & FP64ExpoMask >> FP64MantBits),
+                    mantissa: As<long, Tbin>(AsInt64(val) & FP64MantMask));
+            throw new NotSupportedException($"分离浮点类型{typeof(Tfp)}暂未支持");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float SetupBinary32(int signBit, int exponentBit, int mantissaBit) =>
-            AsFloat(signBit << 31 | (exponentBit << 23 & FP32ExpoMask) | mantissaBit & FP32MantMask);
-
-        public static FP32Binary FP32BitIncrement<FP32Binary>(FP32Binary binary) where FP32Binary : unmanaged
+        public static Tfp SetupFPBinary<Tbin, Tfp>(Tbin sign, Tbin expo, Tbin mant) where Tfp : unmanaged where Tbin : unmanaged
         {
-#if DEBUG
-            unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
-#endif
-            int bits = AsInt(binary);
-
-            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
-            {
-                // NaN returns NaN
-                // -Infinity returns float.MinValue
-                // +Infinity returns +Infinity
-                return (bits == unchecked((int)0xFF800000)) ? As<float, FP32Binary>(float.MinValue) : binary;
-            }
-
-            if (bits == unchecked((int)0x80000000))
-            {
-                // -0.0 returns float.Epsilon
-                return As<float, FP32Binary>(float.Epsilon);
-            }
-
-            // Negative values need to be decremented
-            // Positive values need to be incremented
-            bits += (bits < 0) ? -1 : +1;
-            return As<int, FP32Binary>(bits);
-        }
-        public static FP32Binary FP32BitDecrement<FP32Binary>(FP32Binary binary) where FP32Binary : unmanaged
-        {
-#if DEBUG
-            unsafe { System.Diagnostics.Debug.Assert(sizeof(FP32Binary) == 4, "指定的数据类型应为32位.实际长度:" + sizeof(FP32Binary) * 8); }
-#endif
-            int bits = AsInt(binary);
-            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
-            {
-                // NaN returns NaN
-                // -Infinity returns -Infinity
-                // +Infinity returns float.MaxValue
-                return (bits == FP32ExpoMask) ? As<float, FP32Binary>(float.MaxValue) : binary;
-            }
-
-            if (bits == 0)
-            {
-                // +0.0 returns -float.Epsilon
-                return As<float, FP32Binary>(-float.Epsilon);
-            }
-            // Negative values need to be incremented
-            // Positive values need to be decremented
-            bits += (bits < 0) ? +1 : -1;
-            return As<int, FP32Binary>(bits);
+            unsafe { Debug.Assert(sizeof(Tfp) == sizeof(Tbin)); }
+            if (typeof(Tfp) == typeof(float))
+                return As<int, Tfp>(AsInt32(sign) << 31 | AsInt32(expo) << FP32MantBits & FP32ExpoMask | AsInt32(mant) & FP32MantMask);
+            if (typeof(Tfp) == typeof(double))
+                return As<long, Tfp>(AsInt64(sign) << 63 | AsInt64(expo) << FP64MantBits & FP64ExpoMask | AsInt64(mant) & FP64MantMask);
+            throw new NotSupportedException($"拼装浮点类型{typeof(Tfp)}暂未支持");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe Tto As<Tfrom, Tto>(Tfrom from) where Tfrom : unmanaged where Tto : unmanaged => *(Tto*)&from;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe int AsInt<Tfrom>(Tfrom from) where Tfrom : unmanaged => *(int*)&from;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe float AsFloat<Tfrom>(Tfrom from) where Tfrom : unmanaged => *(float*)&from;
-
-        public static bool TryParseBin(string binStr, int lengthLimit, out int result)
+        /// <summary>
+        /// 尝试把二进制字符串转换为二进制变量.
+        /// </summary>
+        /// <param name="result">如果转换失败, 返回default(Tbin)</param>
+        /// <returns>如果转换成功则返回'\0', 如果有'0'或'1'以外的字符则返回对应的字符值</returns>
+        public static unsafe char TryParseBin<Tbin>(string binStr, out Tbin result) where Tbin : unmanaged
         {
-            result = 0;
-            if (binStr.Length > lengthLimit)
-                return false;
+            Debug.Assert(sizeof(Tbin) <= 8, "暂不支持转换为大于64位的类型");
+            result = default;
+            long tmp = 0;
             for (int i = 0; i < binStr.Length; i++)
             {
-                result <<= 1;
+                tmp <<= 1;
                 if (TryParseBinChar(binStr[i], out int val))
                 {
-                    result |= val;
+                    tmp |= (long)val;
                 }
-                else
-                {
-                    result = binStr[i];
-                    return false;
-                }
+                else return binStr[i];
             }
-            return true;
+            result = As<long, Tbin>(tmp);
+            return'\0';
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseBinChar(char c, out int result)
@@ -118,8 +80,7 @@ namespace IEEE754Calculator
         /// <exception cref="ArgumentOutOfRangeException">如果length大于T类型的bit数量, 为防止内存越界读取, 会丢这个东西</exception>
         public static unsafe string ToBinString<T>(T x, int length = 0) where T : unmanaged
         {
-            if (length > sizeof(T) * 8)
-                throw new ArgumentOutOfRangeException($"length不能大于{typeof(T)}的位长度!");
+            Trace.Assert(length <= sizeof(T) * 8, $"length{length}不能大于{typeof(T)}的位长度!");
 
             var sb = new StringBuilder();
             byte* px = (byte*)&x;
@@ -142,5 +103,83 @@ namespace IEEE754Calculator
             int byteIdx = Math.DivRem(bitIdx, 8, out int rem);
             return (p[byteIdx] >> rem) & 1;
         }
+
+        public static float BitIncrement(float binary)
+        {
+            int bits = AsInt32(binary);
+            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
+            {
+                // NaN returns NaN
+                // -Infinity returns float.MinValue
+                // +Infinity returns +Infinity
+                return (bits == unchecked((int)0xFF800000)) ? float.MinValue : binary;
+            }
+            if (bits == unchecked((int)0x80000000))
+                return float.Epsilon;// -0.0 returns float.Epsilon
+            bits += (bits < 0) ? -1 : +1;
+            return AsFP32(bits);
+        }
+
+        public static float BitDecrement(float binary)
+        {
+            int bits = AsInt32(binary);
+            if ((bits & FP32ExpoMask) >= FP32ExpoMask)
+            {
+                // NaN returns NaN
+                // -Infinity returns -Infinity
+                // +Infinity returns float.MaxValue
+                return (bits == FP32ExpoMask) ? float.MaxValue : binary;
+            }
+            if (bits == 0)
+                return -float.Epsilon;// +0.0 returns -float.Epsilon
+            bits += (bits < 0) ? +1 : -1;
+            return AsFP32(bits);
+        }
+        public static double BitDecrement(double x)
+        {
+            long bits = AsInt64(x);
+            if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
+            {
+                // NaN returns NaN
+                // -Infinity returns -Infinity
+                // +Infinity returns double.MaxValue
+                return (bits == 0x7FF00000_00000000) ? double.MaxValue : x;
+            }
+            if (bits == 0x00000000_00000000)
+                return -double.Epsilon;// +0.0 returns -double.Epsilon
+            bits += (bits < 0) ? +1 : -1;
+            return AsFP64(bits);
+        }
+
+        public static double BitIncrement(double x)
+        {
+            long bits = AsInt64(x);
+
+            if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
+            {
+                // NaN returns NaN
+                // -Infinity returns double.MinValue
+                // +Infinity returns +Infinity
+                return (bits == unchecked((long)(0xFFF00000_00000000))) ? double.MinValue : x;
+            }
+
+            if (bits == unchecked((long)0x80000000_00000000))
+                return double.Epsilon;// -0.0 returns double.Epsilon
+            bits += (bits < 0) ? -1 : +1;
+            return AsFP64(bits);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe Tto As<Tfrom, Tto>(Tfrom from) where Tfrom : unmanaged where Tto : unmanaged
+        {
+            Debug.Assert(sizeof(Tfrom) >= sizeof(Tto), $"from的类型{typeof(Tfrom)}不能小于{typeof(Tto)}类型的位长度{sizeof(Tto) * 8}!");
+            return *(Tto*)&from;
+        }
+        [MethodImpl(256)] public static int AsInt32<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, int>(from);
+        [MethodImpl(256)] public static long AsInt64<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, long>(from);
+        [MethodImpl(256)] public static uint AsUInt32<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, uint>(from);
+        [MethodImpl(256)] public static ulong AsUInt64<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, ulong>(from);
+        [MethodImpl(256)] public static float AsFP32<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, float>(from);
+        [MethodImpl(256)] public static double AsFP64<Tfrom>(Tfrom from) where Tfrom : unmanaged => As<Tfrom, double>(from);
     }
 }

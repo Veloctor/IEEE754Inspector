@@ -1,5 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
+using static IEEE754Calculator.MathTool;
+using System;
 
 namespace IEEE754Calculator
 {
@@ -8,104 +11,152 @@ namespace IEEE754Calculator
     /// </summary>
     public partial class MainWindow : Window
     {
+        public enum FloatMode { Single, Double } //为了保证FloatModeTab Index与枚举值同步, 不要手动指定值
+
+        FloatMode currentMode;
+
         public MainWindow()
         {
             InitializeComponent();
+            FloatModeTabControl.Items.Clear();
+            foreach (var m in typeof(FloatMode).GetEnumNames())
+                FloatModeTabControl.Items.Add(new TabItem() { Header = m });
             RefreshDisplay(0);
-            ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算\\双精度等");
+            ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算/双精度最小增量等");
         }
 
-        void RefreshDisplay(float val)
+        //Todo: 让最小增量和最小减量支持双精度
+        private void FloatModeTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            (int sign, int expo, int mantissa) = MathTool.SplitBinary32(val);
-            RealValueBox.Text = val.ToString("G10");
-            SignBitBox.Text = MathTool.ToBinString(sign, 1);
-            ExponentBitBox.Text = MathTool.ToBinString(expo, 8);
-            MantissaBitBox.Text = MathTool.ToBinString(mantissa, 23);
+            currentMode = (FloatMode)FloatModeTabControl.SelectedIndex;
+            bool isSingle = currentMode == FloatMode.Single;
+            MantissaBitBox.MaxLength = isSingle ? FP32MantBits : FP64MantBits;
+            ExponentBitBox.MaxLength = isSingle ? FP32ExpoBits : FP64ExpoBits;
+            
+            if (currentMode == FloatMode.Single)
+            {
+                float.TryParse(RealValueBox.Text, out float x);
+                RefreshDisplay(x);
+            }
+            else if(currentMode == FloatMode.Double)
+            {
+                double.TryParse(RealValueBox.Text, out double x);
+                RefreshDisplay(x);
+            }
+        }
+
+        unsafe void RefreshDisplay<T>(T binary) where T : unmanaged
+        {
+            if (sizeof(T) == sizeof(float))
+                RefreshDisplay32(AsFP32(binary));
+            else if (sizeof(T) == sizeof(double))
+                RefreshDisplay64(AsFP64(binary));
+        }
+
+        void RefreshDisplay64(double val)
+        {
+            (long sign, long expo, long mantissa) = SplitFPBinary<double, long>(val);
+            RealValueBox.Text = val.ToString("G18");
+            SignBitBox.Text = ToBinString(sign, 1);
+            ExponentBitBox.Text = ToBinString(expo, 11);
+            MantissaBitBox.Text = ToBinString(mantissa, 52);
             //refresh details
-            float mantVal = MathTool.SetupBinary32(0, 127, mantissa);
+            double mantVal = SetupFPBinary<long, double>(0, 1023, mantissa);
+            if (expo == 0) mantVal--;
+            MantissaValBox.Text = mantVal.ToString("G18");
+            ExponentValBox.Text = (expo - 1023).ToString();
+            SignValBox.Text = sign == 0 ? "+" : "-";
+            bool isDenormal = expo == 0 && mantissa != 0;
+            IsNormalLabel.Content = isDenormal ? "是" : "否";
+            long bits = AsInt64(val);
+            ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 64)}");
+        }
+
+        void RefreshDisplay32(float val)
+        {
+            (int sign, int expo, int mantissa) = SplitFPBinary<float, int>(val);
+            RealValueBox.Text = val.ToString("G10");
+            SignBitBox.Text = ToBinString(sign, 1);
+            ExponentBitBox.Text = ToBinString(expo, 8);
+            MantissaBitBox.Text = ToBinString(mantissa, 23);
+            //refresh details
+            float mantVal = SetupFPBinary<int, float>(0, 127, mantissa);
             if (expo == 0) mantVal--;
             MantissaValBox.Text = mantVal.ToString("G7");
             ExponentValBox.Text = (expo - 127).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
             bool isDenormal = expo == 0 && mantissa != 0;
             IsNormalLabel.Content = isDenormal ? "是" : "否";
-            int bits = MathTool.AsInt(val);
-            ShowMsg($"0x{bits:X}\n0b{MathTool.ToBinString(bits, 32)}");
-        }
-
-        void ShowMsg(string msg)
-        {
-            MsgBox.Text = msg;
+            int bits = AsInt32(val);
+            ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 32)}");
         }
 
         void BitBoxesKeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter && TryParseBits(out int sign, out int expo, out int mantissa))
-            {
-                RefreshDisplay(MathTool.SetupBinary32(sign, expo, mantissa));
-            }
+            if (e.Key != Key.Enter) return;
+
+            if (currentMode == FloatMode.Single && TryParseBits(out int sign32, out int expo32, out int mantissa32))
+                RefreshDisplay(SetupFPBinary<int, float>(sign32, expo32, mantissa32));
+            else if (currentMode == FloatMode.Double && TryParseBits(out long sign64, out long expo64, out long mantissa64))
+                RefreshDisplay(SetupFPBinary<long, double>(sign64, expo64, mantissa64));
         }
 
         void RealValueBoxKeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
-                if (float.TryParse(RealValueBox.Text, out float result))
-                    RefreshDisplay(result);
+                if (currentMode == FloatMode.Single && float.TryParse(RealValueBox.Text, out float resultf))
+                    RefreshDisplay(resultf);
+                else if (currentMode == FloatMode.Double && double.TryParse(RealValueBox.Text, out double resultd))
+                    RefreshDisplay(resultd);
                 else
-                    ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
+                    ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为{currentMode}浮点数.");
             }
         }
 
-        private void IncrementButton_Click(object sender, RoutedEventArgs e)
+        private void IncrementButton_Click(object sender, RoutedEventArgs e) => DoValueChange(BitIncrement, BitIncrement);
+
+        private void DecrementButton_Click(object sender, RoutedEventArgs e) => DoValueChange(BitDecrement, BitDecrement);
+
+        void DoValueChange(Func<float, float> floatChangeFunc, Func<double, double> doubleChangeFunc)
         {
-            if (!TryParseBits(out int sign, out int expo, out int mantissa))
+            if (currentMode == FloatMode.Single && TryParseBits(out int signf, out int expof, out int mantissaf))
             {
-                ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
-                return;
+                float before = SetupFPBinary<int, float>(signf, expof, mantissaf);
+                float after = floatChangeFunc(before);
+                RefreshDisplay(after);
+                ShowMsg($"变化量:{after - before:G10}");
             }
-            float before = MathTool.SetupBinary32(sign, expo, mantissa);
-            float after = MathTool.FP32BitIncrement(before);
-            RefreshDisplay(after);
-            ShowMsg($"变化量:{after - before:G10}");
+            else if (currentMode == FloatMode.Double && TryParseBits(out long signd, out long expod, out long mantissad))
+            {
+                double before = SetupFPBinary<long, double>(signd, expod, mantissad);
+                double after = doubleChangeFunc(before);
+                RefreshDisplay(after);
+                ShowMsg($"变化量:{after - before:G10}");
+            }
+            else ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
         }
 
-        private void DecrementButton_Click(object sender, RoutedEventArgs e)
+        bool TryParseBits<Tbin>(out Tbin sign, out Tbin expo, out Tbin mantissa) where Tbin : unmanaged
         {
-            if (!TryParseBits(out int sign, out int expo, out int mantissa))
+            expo = mantissa = default;
+            char c;
+            if ((c = TryParseBin(SignBitBox.Text, out sign)) != '\0')
             {
-                ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
-                return;
+                ShowMsg($"符号位输入\"{SignBitBox.Text}\"含非法字符'{c}'.\n应该输入0或1.");
             }
-            float before = MathTool.SetupBinary32(sign, expo, mantissa);
-            float after = MathTool.FP32BitDecrement(before);
-            RefreshDisplay(after);
-            ShowMsg($"变化量:{after - before:G10}");
+            else if ((c = TryParseBin(ExponentBitBox.Text, out expo)) != '\0')
+            {
+                ShowMsg($"指数输入\"{ExponentBitBox.Text}\"含非法字符'{c}'.\n应该输入0或1.");
+            }
+            else if ((c = TryParseBin(MantissaBitBox.Text, out mantissa)) != '\0')
+            {
+                ShowMsg($"尾数输入\"{MantissaBitBox.Text}\"含非法字符'{c}'.\n应该输入0或1.");
+            }
+            else return true;
+            return false;
         }
 
-        bool TryParseBits(out int sign, out int expo, out int mantissa)
-        {
-            expo = mantissa = 0;
-            string txt = SignBitBox.Text.TrimStart('0');
-            if (!MathTool.TryParseBin(txt, 1, out sign))
-            {
-                ShowMsg($"符号位输入\"{txt}\"含非法字符'{(char)sign}'.\n应该输入0或1.");
-                return false;
-            }
-            txt = ExponentBitBox.Text.TrimStart('0');
-            if (!MathTool.TryParseBin(txt, 8, out expo))
-            {
-                ShowMsg($"指数输入\"{txt}\"含非法字符'{(char)expo}'.\n应该输入0或1.");
-                return false;
-            }
-            txt = MantissaBitBox.Text.TrimStart('0');
-            if(!MathTool.TryParseBin(txt, 23, out mantissa))
-            {
-                ShowMsg($"尾数输入\"{txt}\"含非法字符'{(char)mantissa}'.\n应该输入0或1.");
-                return false;
-            }
-            return true;
-        }
+        void ShowMsg<T>(in T msg) => MsgBox.Text = msg.ToString();
     }
 }
