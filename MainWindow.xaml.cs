@@ -65,7 +65,7 @@ namespace IEEE754Calculator
                 expo++;
                 mantVal--;
             }
-            MantissaValBox.Text = mantVal.ToString("G16");
+            MantissaValBox.Text = mantVal.ToString("G17");
             ExponentValBox.Text = (expo - 1023).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
             IsNormalLabel.Content = isDenormal ? "是" : "否";
@@ -88,7 +88,7 @@ namespace IEEE754Calculator
                 expo++;
                 mantVal--;
             }
-            MantissaValBox.Text = mantVal.ToString("G7");
+            MantissaValBox.Text = mantVal.ToString("G8");
             ExponentValBox.Text = (expo - 127).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
             IsNormalLabel.Content = isDenormal ? "是" : "否";
@@ -129,14 +129,14 @@ namespace IEEE754Calculator
                 float before = SetupFPBinary<int, float>(signf, expof, mantissaf);
                 float after = floatChangeFunc(before);
                 RefreshDisplay(after);
-                ShowMsg($"变化量:{after - before:G10}");
+                ShowMsg($"变化量:{(double)after - before:G17}");
             }
             else if (currentMode == FloatMode.Double && TryParseBits(out long signd, out long expod, out long mantissad))
             {
                 double before = SetupFPBinary<long, double>(signd, expod, mantissad);
                 double after = doubleChangeFunc(before);
                 RefreshDisplay(after);
-                ShowMsg($"变化量:{after - before:G10}");
+                ShowMsg($"变化量:{after - before:G17}");
             }
             else ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为单精度浮点.");
         }
