@@ -70,7 +70,7 @@ namespace IEEE754Calculator
             SignValBox.Text = sign == 0 ? "+" : "-";
             IsNormalLabel.Content = isDenormal ? "是" : "否";
             long bits = AsInt64(val);
-            ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 64)}");
+            ShowMsg($"Hex: {bits:X}\nBin: {ToBinString(bits, 64)}");
         }
 
         void RefreshDisplay32(float val)
