@@ -47,9 +47,9 @@ namespace IEEE754Calculator
         /// </summary>
         /// <param name="result">如果转换失败, 返回default(Tbin)</param>
         /// <returns>如果转换成功则返回'\0', 如果有'0'或'1'以外的字符则返回对应的字符值</returns>
-        public static unsafe char TryParseBin<Tbin>(string binStr, out Tbin result) where Tbin : unmanaged
+        public static char TryParseBin<Tbin>(string binStr, out Tbin result) where Tbin : unmanaged
         {
-            Debug.Assert(sizeof(Tbin) <= 8, "暂不支持转换为大于64位的类型");
+            unsafe { Debug.Assert(sizeof(Tbin) <= 8, "暂不支持转换为大于64位的类型"); }
             result = default;
             long tmp = 0;
             for (int i = 0; i < binStr.Length; i++)

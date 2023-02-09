@@ -1,8 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Input;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using static IEEE754Calculator.MathTool;
-using System;
 
 namespace IEEE754Calculator
 {
@@ -18,14 +18,11 @@ namespace IEEE754Calculator
         public MainWindow()
         {
             InitializeComponent();
-            FloatModeTabControl.Items.Clear();
             foreach (var m in typeof(FloatMode).GetEnumNames())
                 FloatModeTabControl.Items.Add(new TabItem() { Header = m });
-            RefreshDisplay(0);
             ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算/双精度最小增量等");
         }
 
-        //Todo: 让最小增量和最小减量支持双精度
         private void FloatModeTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             currentMode = (FloatMode)FloatModeTabControl.SelectedIndex;
@@ -56,7 +53,7 @@ namespace IEEE754Calculator
         void RefreshDisplay64(double val)
         {
             (long sign, long expo, long mantissa) = SplitFPBinary<double, long>(val);
-            RealValueBox.Text = val.ToString("G18");
+            RealValueBox.Text = val.ToString("G17");
             SignBitBox.Text = ToBinString(sign, 1);
             ExponentBitBox.Text = ToBinString(expo, 11);
             MantissaBitBox.Text = ToBinString(mantissa, 52);
@@ -68,7 +65,7 @@ namespace IEEE754Calculator
                 expo++;
                 mantVal--;
             }
-            MantissaValBox.Text = mantVal.ToString("G18");
+            MantissaValBox.Text = mantVal.ToString("G16");
             ExponentValBox.Text = (expo - 1023).ToString();
             SignValBox.Text = sign == 0 ? "+" : "-";
             IsNormalLabel.Content = isDenormal ? "是" : "否";
@@ -79,7 +76,7 @@ namespace IEEE754Calculator
         void RefreshDisplay32(float val)
         {
             (int sign, int expo, int mantissa) = SplitFPBinary<float, int>(val);
-            RealValueBox.Text = val.ToString("G10");
+            RealValueBox.Text = val.ToString("G8");
             SignBitBox.Text = ToBinString(sign, 1);
             ExponentBitBox.Text = ToBinString(expo, 8);
             MantissaBitBox.Text = ToBinString(mantissa, 23);
@@ -96,7 +93,7 @@ namespace IEEE754Calculator
             SignValBox.Text = sign == 0 ? "+" : "-";
             IsNormalLabel.Content = isDenormal ? "是" : "否";
             int bits = AsInt32(val);
-            ShowMsg($"0x{bits:X}\n0b{ToBinString(bits, 32)}");
+            ShowMsg($"Hex: {bits:X}\nBin: {ToBinString(bits, 32)}");
         }
 
         void BitBoxesKeyUp(object sender, KeyEventArgs e)
@@ -111,15 +108,14 @@ namespace IEEE754Calculator
 
         void RealValueBoxKeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                if (currentMode == FloatMode.Single && float.TryParse(RealValueBox.Text, out float resultf))
-                    RefreshDisplay(resultf);
-                else if (currentMode == FloatMode.Double && double.TryParse(RealValueBox.Text, out double resultd))
-                    RefreshDisplay(resultd);
-                else
-                    ShowMsg($"\"{RealValueBox.Text}\"\n不能转换为{currentMode}浮点数.");
-            }
+            if (e.Key != Key.Enter) return;
+
+            if (currentMode == FloatMode.Single && float.TryParse(RealValueBox.Text, out float resultf))
+                RefreshDisplay(resultf);
+            else if (currentMode == FloatMode.Double && double.TryParse(RealValueBox.Text, out double resultd))
+                RefreshDisplay(resultd);
+            else
+                ShowMsg($"\"{RealValueBox.Text}\"不能转换为{currentMode}浮点数.");
         }
 
         private void IncrementButton_Click(object sender, RoutedEventArgs e) => DoValueChange(BitIncrement, BitIncrement);
@@ -165,6 +161,17 @@ namespace IEEE754Calculator
             return false;
         }
 
-        void ShowMsg<T>(in T msg) => MsgBox.Text = msg.ToString();
+        void ShowMsg<T>(in T msg) where T : unmanaged
+        {
+            DebugTool.LogMsg(msg, 2);
+            MsgBox.Text = msg.ToString();
+        }
+
+        void ShowMsg(in object msg)
+        {
+            DebugTool.LogMsg(msg, 2);
+            if (msg is string str) MsgBox.Text = str;
+            else MsgBox.Text = msg.ToString();
+        }
     }
 }

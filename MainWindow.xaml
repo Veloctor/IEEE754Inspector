@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IEEE754Calculator"
         mc:Ignorable="d"
-        Title="IEE754计算器v0.3 by 矢速"
+        Title="IEE754计算器v0.3.1 by 矢速"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize">
     <StackPanel>
-        <TabControl Name="FloatModeTabControl" SelectionChanged="FloatModeTabControl_SelectionChanged" BorderThickness="0"/>
+        <TabControl Name="FloatModeTabControl" SelectionChanged="FloatModeTabControl_SelectionChanged" SelectedIndex="0" BorderThickness="0"/>
         <StackPanel Orientation="Horizontal">
             <StackPanel Width="60">
                 <Label HorizontalAlignment="Center">符号位</Label>
