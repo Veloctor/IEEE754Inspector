@@ -135,21 +135,6 @@ namespace IEEE754Calculator
             bits += (bits < 0) ? +1 : -1;
             return AsFP32(bits);
         }
-        public static double BitDecrement(double x)
-        {
-            long bits = AsInt64(x);
-            if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
-            {
-                // NaN returns NaN
-                // -Infinity returns -Infinity
-                // +Infinity returns double.MaxValue
-                return (bits == 0x7FF00000_00000000) ? double.MaxValue : x;
-            }
-            if (bits == 0x00000000_00000000)
-                return -double.Epsilon;// +0.0 returns -double.Epsilon
-            bits += (bits < 0) ? +1 : -1;
-            return AsFP64(bits);
-        }
 
         public static double BitIncrement(double x)
         {
@@ -166,6 +151,22 @@ namespace IEEE754Calculator
             if (bits == unchecked((long)0x80000000_00000000))
                 return double.Epsilon;// -0.0 returns double.Epsilon
             bits += (bits < 0) ? -1 : +1;
+            return AsFP64(bits);
+        }
+
+        public static double BitDecrement(double x)
+        {
+            long bits = AsInt64(x);
+            if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
+            {
+                // NaN returns NaN
+                // -Infinity returns -Infinity
+                // +Infinity returns double.MaxValue
+                return (bits == 0x7FF00000_00000000) ? double.MaxValue : x;
+            }
+            if (bits == 0x00000000_00000000)
+                return -double.Epsilon;// +0.0 returns -double.Epsilon
+            bits += (bits < 0) ? +1 : -1;
             return AsFP64(bits);
         }
 

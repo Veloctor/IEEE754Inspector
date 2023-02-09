@@ -20,7 +20,7 @@ namespace IEEE754Calculator
             InitializeComponent();
             foreach (var m in typeof(FloatMode).GetEnumNames())
                 FloatModeTabControl.Items.Add(new TabItem() { Header = m });
-            ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算/双精度最小增量等");
+            ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算等功能");
         }
 
         private void FloatModeTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
