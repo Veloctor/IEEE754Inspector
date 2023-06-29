@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<Version>0.4</Version>
+	<ApplicationIcon>ico.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="ico.ico" />
+  </ItemGroup>
+
+</Project>
