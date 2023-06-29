@@ -344,7 +344,7 @@ public struct ddouble
 		return true;
 	}
 	public override readonly string ToString() => ToString();
-	public readonly string ToString(int precision = 5, bool fillZero = true, bool fixedPoint = false, bool showPositive = false, bool uppercase = false)
+	public readonly string ToString(int precision = 30, bool fillZero = false, bool fixedPoint = false, bool showPositive = false, bool uppercase = false)
 	{
 		StringBuilder s = new();
 		int i;

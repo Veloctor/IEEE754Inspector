@@ -9,8 +9,11 @@
 		WindowStartupLocation="CenterScreen"
 		ResizeMode="CanMinimize">
 	<StackPanel>
-		<TabControl Name="FloatModeTabControl" SelectionChanged="FloatModeTabControl_SelectionChanged" SelectedIndex="0" BorderThickness="0"/>
-		<StackPanel Orientation="Horizontal">
+		<TabControl Name="FloatModeTabControl" SelectedIndex="0" BorderThickness="0">
+            <TabItem Header="单精度"/>
+            <TabItem Header="双精度"/>
+        </TabControl>
+        <StackPanel Orientation="Horizontal">
 			<StackPanel Width="60">
 				<Label HorizontalAlignment="Center">符号位</Label>
 				<TextBox

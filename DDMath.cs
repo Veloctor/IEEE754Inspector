@@ -126,19 +126,19 @@ namespace Kerwis.DDouble
         }
 
         /// <summary> double-double = double - double </summary>
-        public static ddouble Sub(double a, double b) => new ddouble(TwoDiff(a, b, out double e), e);
+        public static ddouble Sub(double a, double b) => new(TwoDiff(a, b, out double e), e);
 
         /// <summary> double-double * (2.0 ^ exp) </summary>
         public static double Ldexp(double x, int exp) => (exp > -1 && exp < 64) ? x * (1L << exp) : x * Math.Pow(2, exp);
 
         /// <summary> double-double * (2.0 ^ exp) </summary>
-        public static ddouble Ldexp(in ddouble a, int exp) => new ddouble(Ldexp(a.hi, exp), Ldexp(a.lo, exp));
+        public static ddouble Ldexp(in ddouble a, int exp) => new(Ldexp(a.hi, exp), Ldexp(a.lo, exp));
 
         /// <summary> double-double * double, where double is a power of 2. </summary>
-        public static ddouble MulPowerOf2(in ddouble a, double b) => new ddouble(a.hi * b, a.lo * b);
+        public static ddouble MulPowerOf2(in ddouble a, double b) => new(a.hi * b, a.lo * b);
 
         /// <summary> double-double = double * double </summary>
-        public static ddouble Mul(double a, double b) => new ddouble(TwoProd(a, b, out double e), e);
+        public static ddouble Mul(double a, double b) => new(TwoProd(a, b, out double e), e);
 
         public static ddouble Div(double a, double b)
         {
