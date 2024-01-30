@@ -66,10 +66,15 @@ public partial class MainWindow : Window
 		IsNormalLabel.Content = isDenormal ? "是" : "否";
 		long bits = AsInt64(val);
 		ShowMsg($"十六进制: {bits:X}\n二进制: {ToBinString(bits, 64)}");
-		ddouble inc = (ddouble)Math.BitIncrement(val) - val;
-		ddouble dec = (ddouble)Math.BitDecrement(val) - val;
-		BitIncrementBox.Text = inc.ToString();
-		BitDecrementBox.Text = dec.ToString();
+		try {
+			BitIncrementBox.Text = ((ddouble)Math.BitIncrement(val) - val).ToString();
+			BitDecrementBox.Text = ((ddouble)Math.BitDecrement(val) - val).ToString();
+		}
+		catch (Exception) { }
+		finally {
+			BitIncrementBox.Text = (Math.BitIncrement(val) - val).ToString();
+			BitDecrementBox.Text = (Math.BitDecrement(val) - val).ToString();
+		}
 	}
 
 	void RefreshDisplay32(float val)
@@ -92,10 +97,15 @@ public partial class MainWindow : Window
 		IsNormalLabel.Content = isDenormal ? "是" : "否";
 		int bits = AsInt32(val);
 		ShowMsg($"十六进制: {bits:X}\n二进制: {ToBinString(bits, 32)}");
-		ddouble inc = (ddouble)MathF.BitIncrement(val) - val;
-		ddouble dec = (ddouble)MathF.BitDecrement(val) - val;
-		BitIncrementBox.Text = inc.ToString();
-		BitDecrementBox.Text = dec.ToString();
+		try {
+			BitIncrementBox.Text = ((ddouble)MathF.BitIncrement(val) - val).ToString();
+			BitDecrementBox.Text = ((ddouble)MathF.BitDecrement(val) - val).ToString();
+		}
+		catch (Exception) { }
+		finally {
+			BitIncrementBox.Text = (MathF.BitIncrement(val) - val).ToString();
+			BitDecrementBox.Text = (MathF.BitDecrement(val) - val).ToString();
+		}
 	}
 
 	void BitBoxesKeyUp(object sender, KeyEventArgs e)

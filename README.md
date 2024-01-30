@@ -6,5 +6,5 @@
 
  使用了WPF UI, 易于操作
 
-运行环境：.NET7桌面运行时（.NET7 Windows Desktop）
-https://dotnet.microsoft.com/zh-cn/download/dotnet/7.0
+运行环境：.NET8桌面运行时（.NET8 Windows Desktop）
+https://dotnet.microsoft.com/zh-cn/download/dotnet/
