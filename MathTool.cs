@@ -53,23 +53,23 @@ internal static class MathTool
 	}
 
 	/// <summary>
-	/// 尝试把二进制字符串转换为二进制变量.
+	/// 尝试把二进制字符串转换为二进制变量。大于目标值类型位数的高位部分将被忽略。
 	/// </summary>
 	/// <param name="result">如果转换失败, 返回default(Tbin)</param>
 	/// <returns>如果转换成功则返回'\0', 如果有'0'或'1'以外的字符则返回对应的字符值</returns>
 	public static char TryParseBin<Tbin>(string binStr, out Tbin result) where Tbin : unmanaged
 	{
-		unsafe { Debug.Assert(sizeof(Tbin) <= 8, "暂不支持转换为大于64位的类型"); }
+		Debug.Assert(Unsafe.SizeOf<Tbin>() <= 8, "暂不支持转换为大于64位的类型");
 		result = default;
-		long tmp = 0;
+		long buffer = 0;
 		for (int i = 0; i < binStr.Length; i++) {
-			tmp <<= 1;
+			buffer <<= 1;
 			if (TryParseBinChar(binStr[i], out int val)) {
-				tmp |= (long)val;
+				buffer |= (long)val;
 			}
 			else return binStr[i];
 		}
-		result = Unsafe.As<long, Tbin>(ref tmp);
+		result = Unsafe.As<long, Tbin>(ref buffer);
 		return '\0';
 	}
 

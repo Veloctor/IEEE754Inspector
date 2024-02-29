@@ -5,7 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<Version>0.4.2</Version>
+	<Version>0.4.3</Version>
 	<ApplicationIcon>ico.ico</ApplicationIcon>
   </PropertyGroup>
 
