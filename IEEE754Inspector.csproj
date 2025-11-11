@@ -5,16 +5,16 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<Version>0.4.3</Version>
+	<Version>0.4.4</Version>
 	<ApplicationIcon>ico.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="ico.ico" />
   </ItemGroup>
-
-  <ItemGroup>
+    
+  <!--ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.5" />
-  </ItemGroup>
+  </ItemGroup-->
 
 </Project>

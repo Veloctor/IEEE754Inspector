@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Kerwis.DDouble;
 using static IEEE754Inspector.MathTool;
 
@@ -14,13 +15,21 @@ public partial class MainWindow
 
 	/// <summary> 如果十进制字符串表示可以Parse为当前浮点模式的对象则返回对应类型的box对象，否则返回原字符串 </summary>
 	object CurrentValue => IsSingleMode
-			? float.TryParse(RealValueBox.Text, out float valuef) ? valuef : RealValueBox.Text
-			: double.TryParse(RealValueBox.Text, out double valued) ? valued : RealValueBox.Text;
+		? float.TryParse(RealValueBox.Text, out float valuef) ? valuef : RealValueBox.Text
+		: double.TryParse(RealValueBox.Text, out double valued)
+			? valued
+			: RealValueBox.Text;
+
+	readonly DispatcherTimer t = new();
+	bool autoIsIncrement;
 
 	public MainWindow()
 	{
 		InitializeComponent();
 		FloatModeTabControl.SelectionChanged += FloatModeTabControl_SelectionChanged;
+
+		t.Interval = TimeSpan.FromMilliseconds(1);
+		t.Tick += OnTOnTick;
 
 		Title = $"IEE754检视器 v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} by 矢速";
 		ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算等功能");
@@ -79,7 +88,7 @@ public partial class MainWindow
 	void RefreshDisplay32(float val)
 	{
 		(int sign, int expo, int mantissa) = SplitFPBinary<float, int>(val);
-		RealValueBox.Text = val.ToString("G8");
+		RealValueBox.Text = val.ToString("G9");
 		SignBitBox.Text = ToBinString(sign, 1);
 		ExponentBitBox.Text = ToBinString(expo, 8);
 		MantissaBitBox.Text = ToBinString(mantissa, 23);
@@ -112,21 +121,57 @@ public partial class MainWindow
 	void RefreshDisplayDec(Func<float, float> floatChangeFunc = null, Func<double, double> doubleChangeFunc = null)
 	{
 		switch (CurrentValue) {
-			case float f:
-				RefreshDisplay32(floatChangeFunc?.Invoke(f) ?? f); break;
-			case double d:
-				RefreshDisplay64(doubleChangeFunc?.Invoke(d) ?? d); break;
-			case string originalStr:
-				ShowMsg($"“{originalStr}”不能解析为当前所选类型浮点数!"); break;
-			default:
-				ShowMsg($"异常, 意外的类型: {CurrentValue.GetType().Name}, 值: {CurrentValue}."); break;
+		case float f:
+			RefreshDisplay32(floatChangeFunc?.Invoke(f) ?? f); break;
+		case double d:
+			RefreshDisplay64(doubleChangeFunc?.Invoke(d) ?? d); break;
+		case string originalStr:
+			ShowMsg($"“{originalStr}”不能解析为当前所选类型浮点数!"); break;
+		default:
+			ShowMsg($"异常, 意外的类型: {CurrentValue.GetType().Name}, 值: {CurrentValue}."); break;
 		}
 	}
 
-	private void IncrementButton_Click(object sender, RoutedEventArgs e) => RefreshDisplayDec(MathF.BitIncrement, Math.BitIncrement);
-	private void DecrementButton_Click(object sender, RoutedEventArgs e) => RefreshDisplayDec(MathF.BitDecrement, Math.BitDecrement);
+	void IncrementButton_Click(object sender, RoutedEventArgs e) => RefreshDisplayDec(MathF.BitIncrement, Math.BitIncrement);
+	void DecrementButton_Click(object sender, RoutedEventArgs e) => RefreshDisplayDec(MathF.BitDecrement, Math.BitDecrement);
 
-	private void RealValueBox_KeyUp(object sender, KeyEventArgs e)
+	void AutoIncrementButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (!t.IsEnabled) {
+			autoIsIncrement = true;
+			t.Start();
+			AutoIncrementButton.Content = "自动✓";
+		}
+		else {
+			t.Stop();
+			AutoIncrementButton.Content = "自动×";
+			AutoDecrementButton.Content = "自动×";
+		}
+	}
+	
+	void AutoDecrementButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (!t.IsEnabled) {
+			autoIsIncrement = false;
+			t.Start();
+			AutoDecrementButton.Content = "自动✓";
+		}
+		else {
+			t.Stop();
+			AutoIncrementButton.Content = "自动×";
+			AutoDecrementButton.Content = "自动×";
+		}
+	}
+
+	void OnTOnTick(object sender, EventArgs eventArgs)
+	{
+		if (autoIsIncrement)
+			RefreshDisplayDec(MathF.BitIncrement, Math.BitIncrement);
+		else
+			RefreshDisplayDec(MathF.BitDecrement, Math.BitDecrement);
+	}
+
+	void RealValueBox_KeyUp(object sender, KeyEventArgs e)
 	{
 		if (e.Key != Key.Enter) return;
 		RefreshDisplayDec();

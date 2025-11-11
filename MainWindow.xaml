@@ -64,16 +64,16 @@
             <Rectangle Width="5"></Rectangle>
 			<TextBox Name="RealValueBox" Text="0.0" MaxLines="1" FontSize="18" MinWidth="300" KeyUp="RealValueBox_KeyUp"/>
 		</StackPanel>
-		<StackPanel Orientation="Horizontal">
-            <Button Name="IncrementButton" Content="最小增量" Click="IncrementButton_Click" />
-            <Label>值:</Label>
-            <Rectangle Width="5"></Rectangle>
+		<StackPanel Orientation="Horizontal" Margin="0,5">
+            <Button Name="IncrementButton" Content="手动" Margin="3,0" Click="IncrementButton_Click" />
+            <Button Name="AutoIncrementButton" Content="自动×" Click="AutoIncrementButton_Click" />
+            <Label>最小增量: </Label>
             <TextBox Name="BitIncrementBox" IsReadOnly="True" BorderThickness="0" MaxLines="1" />
 		</StackPanel>
-		<StackPanel Orientation="Horizontal">
-            <Button Name="DecrementButton" Content="最小负增" Click="DecrementButton_Click" />
-            <Label>值:</Label>
-            <Rectangle Width="5"></Rectangle>
+		<StackPanel Orientation="Horizontal" Margin="0,5">
+            <Button Name="DecrementButton" Content="手动" Margin="3,0" Click="DecrementButton_Click" />
+            <Button Name="AutoDecrementButton" Content="自动×" Click="AutoDecrementButton_Click" />
+            <Label>最小负增: </Label>
 			<TextBox Name="BitDecrementBox" IsReadOnly="True" BorderThickness="0" MaxLines="1"/>
 		</StackPanel>
 		<TextBox Name="MsgBox" IsReadOnly="True"/>
