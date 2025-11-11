@@ -12,7 +12,7 @@ internal static class DebugTool
 			ConsoleManager.Show();
 		StackTrace ss = new(true);
 		Debug.Assert(frameDepth > 0 && frameDepth < ss.FrameCount);
-		var mb = ss.GetFrame(frameDepth).GetMethod();
-		Console.Out.WriteLine($">{mb.DeclaringType.Name}.{mb.Name}:\n{msg}");
+		var mb = ss.GetFrame(frameDepth)?.GetMethod();
+		Console.Out.WriteLine($">{mb?.DeclaringType?.Name}.{mb?.Name}:\n{msg}");
 	}
 }

@@ -79,6 +79,7 @@ internal static class MathTool
 		result = c - '0';
 		return result == (result & 1);
 	}
+	
 	/// <summary>
 	/// 把任意值类型转换为二进制字符串
 	/// </summary>

@@ -129,7 +129,7 @@ namespace Kerwis.DDouble
         public static ddouble Sub(double a, double b) => new(TwoDiff(a, b, out double e), e);
 
         /// <summary> double-double * (2.0 ^ exp) </summary>
-        public static double Ldexp(double x, int exp) => (exp > -1 && exp < 64) ? x * (1L << exp) : x * Math.Pow(2, exp);
+        public static double Ldexp(double x, int exp) => exp is > -1 and < 64 ? x * (1L << exp) : x * Math.Pow(2, exp);
 
         /// <summary> double-double * (2.0 ^ exp) </summary>
         public static ddouble Ldexp(in ddouble a, int exp) => new(Ldexp(a.hi, exp), Ldexp(a.lo, exp));
@@ -272,7 +272,7 @@ namespace Kerwis.DDouble
                 hi = QuickTwoSum(hi, lo, out lo);
             }
 
-            return new ddouble(hi, lo);
+            return new(hi, lo);
         }
 
         public static ddouble Ceil(in ddouble a)

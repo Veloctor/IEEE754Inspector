@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,7 +8,7 @@ using static IEEE754Inspector.MathTool;
 
 namespace IEEE754Inspector;
 
-public partial class MainWindow : Window
+public partial class MainWindow
 {
 	bool IsSingleMode => FloatModeTabControl.SelectedIndex == 0;
 
@@ -21,7 +22,7 @@ public partial class MainWindow : Window
 		InitializeComponent();
 		FloatModeTabControl.SelectionChanged += FloatModeTabControl_SelectionChanged;
 
-		Title = $"IEE754检视器 v{typeof(MainWindow).Assembly.GetName().Version.ToString(3)} by 矢速";
+		Title = $"IEE754检视器 v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} by 矢速";
 		ShowMsg("输入框内输入实数/位后按Enter.\n预计未来加入基本初等函数计算等功能");
 	}
 
@@ -66,10 +67,12 @@ public partial class MainWindow : Window
 			BitIncrementBox.Text = ((ddouble)Math.BitIncrement(val) - val).ToString();
 			BitDecrementBox.Text = ((ddouble)Math.BitDecrement(val) - val).ToString();
 		}
-		catch (Exception) { }
+		catch (Exception) {
+			// ignored
+		}
 		finally {
-			BitIncrementBox.Text = (Math.BitIncrement(val) - val).ToString();
-			BitDecrementBox.Text = (Math.BitDecrement(val) - val).ToString();
+			BitIncrementBox.Text = (Math.BitIncrement(val) - val).ToString(CultureInfo.InvariantCulture);
+			BitDecrementBox.Text = (Math.BitDecrement(val) - val).ToString(CultureInfo.InvariantCulture);
 		}
 	}
 
@@ -97,10 +100,12 @@ public partial class MainWindow : Window
 			BitIncrementBox.Text = ((ddouble)MathF.BitIncrement(val) - val).ToString();
 			BitDecrementBox.Text = ((ddouble)MathF.BitDecrement(val) - val).ToString();
 		}
-		catch (Exception) { }
+		catch (Exception) {
+			// ignored
+		}
 		finally {
-			BitIncrementBox.Text = ((double)MathF.BitIncrement(val) - val).ToString();
-			BitDecrementBox.Text = ((double)MathF.BitDecrement(val) - val).ToString();
+			BitIncrementBox.Text = ((double)MathF.BitIncrement(val) - val).ToString(CultureInfo.InvariantCulture);
+			BitDecrementBox.Text = ((double)MathF.BitDecrement(val) - val).ToString(CultureInfo.InvariantCulture);
 		}
 	}
 
@@ -108,9 +113,9 @@ public partial class MainWindow : Window
 	{
 		switch (CurrentValue) {
 			case float f:
-				RefreshDisplay32(floatChangeFunc != null ? floatChangeFunc(f) : f); break;
+				RefreshDisplay32(floatChangeFunc?.Invoke(f) ?? f); break;
 			case double d:
-				RefreshDisplay64(doubleChangeFunc != null ? doubleChangeFunc(d) : d); break;
+				RefreshDisplay64(doubleChangeFunc?.Invoke(d) ?? d); break;
 			case string originalStr:
 				ShowMsg($"“{originalStr}”不能解析为当前所选类型浮点数!"); break;
 			default:
@@ -151,6 +156,6 @@ public partial class MainWindow : Window
 	private void ShowMsg(object msg)
 	{
 		DebugTool.LogMsg(msg, 2);
-		MsgBox.Text = msg.ToString();
+		MsgBox.Text = msg?.ToString() ?? string.Empty;
 	}
 }
